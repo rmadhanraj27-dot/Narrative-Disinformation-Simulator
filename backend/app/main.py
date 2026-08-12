@@ -7,6 +7,7 @@ from app.database.mongodb import (
     close_database_connection
 )
 from app.database.init_db import initialize_database
+from app.routes.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -18,16 +19,13 @@ async def lifespan(app: FastAPI):
 
     if database_connected:
         print("MongoDB connection successful!")
-
         await initialize_database()
-
     else:
         print("MongoDB connection failed!")
 
     yield
 
     print("Application shutting down...")
-
     await close_database_connection()
 
 
@@ -37,6 +35,9 @@ app = FastAPI(
     description="AI-based proactive misinformation analysis system.",
     lifespan=lifespan
 )
+
+
+app.include_router(auth_router)
 
 
 @app.get("/")
