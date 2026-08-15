@@ -8,7 +8,7 @@ from app.database.mongodb import (
 )
 from app.database.init_db import initialize_database
 from app.routes.auth import router as auth_router
-
+from app.routes.events import router as events_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +38,7 @@ app = FastAPI(
 
 
 app.include_router(auth_router)
+app.include_router(events_router)
 
 
 @app.get("/")

@@ -1,36 +1,42 @@
-import os
-
-from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from app.config.settings import settings
 
-load_dotenv()
 
+# ============================================================
+# MONGODB CONNECTION
+# ============================================================
 
-MONGO_URI = os.getenv(
-    "MONGO_URI",
-    "mongodb://localhost:27017"
+client = AsyncIOMotorClient(
+    settings.mongo_uri
 )
 
-DATABASE_NAME = os.getenv(
-    "DATABASE_NAME",
-    "narrative_disinformation_db"
-)
+database = client[
+    settings.database_name
+]
 
 
-client = AsyncIOMotorClient(MONGO_URI)
-
-database = client[DATABASE_NAME]
-
+# ============================================================
+# CHECK DATABASE CONNECTION
+# ============================================================
 
 async def check_database_connection():
+
     try:
         await client.admin.command("ping")
         return True
+
     except Exception as error:
         print(f"MongoDB connection error: {error}")
         return False
 
 
+# ============================================================
+# CLOSE DATABASE CONNECTION
+# ============================================================
+
 async def close_database_connection():
+
     client.close()
+
+    print("MongoDB connection closed.")
