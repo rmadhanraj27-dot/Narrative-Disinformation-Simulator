@@ -11,6 +11,14 @@ from app.models.event import (
 
 from app.schemas.event import EventCreate
 
+from app.services.event_duplicate import (
+    find_duplicate_event
+)
+
+
+# ============================================================
+# ROUTER
+# ============================================================
 
 router = APIRouter(
     prefix="/events",
@@ -34,12 +42,11 @@ async def create_event(event: EventCreate):
         # CHECK FOR DUPLICATE EVENT
         # ====================================================
 
-        existing_event = await database.events.find_one(
-            {
-                "title": event.title,
-                "event_type": event.event_type,
-                "location": event.location
-            }
+        existing_event = await find_duplicate_event(
+            title=event.title,
+            event_type=event.event_type,
+            location=event.location,
+            source_url=event.source_url
         )
 
         if existing_event is not None:
@@ -49,39 +56,28 @@ async def create_event(event: EventCreate):
                 detail="A similar event already exists"
             )
 
-
         # ====================================================
-        # CREATE MONGODB DOCUMENT
+        # CREATE EVENT DOCUMENT
         # ====================================================
 
         event_document = create_event_document(
-
             title=event.title,
-
             description=event.description,
-
             event_type=event.event_type,
-
             location=event.location,
-
             language=event.language,
-
             source=event.source,
-
             source_url=event.source_url,
-
             severity=event.severity
         )
 
-
         # ====================================================
-        # INSERT EVENT
+        # INSERT INTO MONGODB
         # ====================================================
 
         result = await database.events.insert_one(
             event_document
         )
-
 
         # ====================================================
         # GET CREATED EVENT
@@ -93,7 +89,6 @@ async def create_event(event: EventCreate):
             }
         )
 
-
         if created_event is None:
 
             raise HTTPException(
@@ -101,17 +96,13 @@ async def create_event(event: EventCreate):
                 detail="Event could not be retrieved after creation"
             )
 
-
         return {
             "message": "Event created successfully",
             "event": event_response(created_event)
         }
 
-
     except HTTPException:
-
         raise
-
 
     except Exception as error:
 
@@ -141,9 +132,7 @@ async def get_events():
             -1
         )
 
-
         events = []
-
 
         async for event in cursor:
 
@@ -151,12 +140,10 @@ async def get_events():
                 event_response(event)
             )
 
-
         return {
             "count": len(events),
             "events": events
         }
-
 
     except Exception as error:
 
@@ -188,7 +175,6 @@ async def get_event(event_id: str):
             detail="Invalid event ID"
         )
 
-
     try:
 
         event = await database.events.find_one(
@@ -197,7 +183,6 @@ async def get_event(event_id: str):
             }
         )
 
-
         if event is None:
 
             raise HTTPException(
@@ -205,16 +190,12 @@ async def get_event(event_id: str):
                 detail="Event not found"
             )
 
-
         return {
             "event": event_response(event)
         }
 
-
     except HTTPException:
-
         raise
-
 
     except Exception as error:
 
