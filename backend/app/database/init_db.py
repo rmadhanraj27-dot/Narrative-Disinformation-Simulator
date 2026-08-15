@@ -3,16 +3,13 @@ from app.database.mongodb import database
 
 async def initialize_database():
 
-    # ========================================================
-    # CREATE REQUIRED COLLECTIONS
-    # ========================================================
-
     collections = await database.list_collection_names()
 
     required_collections = [
         "users",
         "news",
         "events",
+        "social_posts",
         "narratives",
         "translated_narratives",
         "evolved_narratives",
@@ -22,62 +19,67 @@ async def initialize_database():
         "activity_logs"
     ]
 
+    # ========================================================
+    # CREATE REQUIRED COLLECTIONS
+    # ========================================================
+
     for collection_name in required_collections:
 
         if collection_name not in collections:
-            await database.create_collection(collection_name)
 
-    print("MongoDB collections initialized successfully.")
-
+            await database.create_collection(
+                collection_name
+            )
 
     # ========================================================
-    # USERS INDEX
+    # EVENT INDEXES
     # ========================================================
 
-    await database.users.create_index(
-        "email",
+    await database.events.create_index(
+        [
+            ("title", 1),
+            ("event_type", 1),
+            ("location", 1)
+        ],
+        name="event_duplicate_lookup"
+    )
+
+    await database.events.create_index(
+        [
+            ("source_url", 1)
+        ],
+        name="event_source_url_lookup",
+        sparse=True
+    )
+
+    # ========================================================
+    # SOCIAL POST INDEXES
+    # ========================================================
+
+    await database.social_posts.create_index(
+        [
+            ("platform", 1),
+            ("post_id", 1)
+        ],
+        name="social_post_unique_id",
         unique=True
     )
 
-
-    # ========================================================
-    # EVENTS INDEXES
-    # ========================================================
-
-    # Newest events first
-    await database.events.create_index(
+    await database.social_posts.create_index(
         [
-            ("created_at", -1)
-        ]
+            ("event_id", 1)
+        ],
+        name="social_post_event_lookup",
+        sparse=True
     )
 
-    # Filter by event type
-    await database.events.create_index(
+    await database.social_posts.create_index(
         [
-            ("event_type", 1)
-        ]
+            ("published_at", -1)
+        ],
+        name="social_post_published_at"
     )
 
-    # Filter by severity
-    await database.events.create_index(
-        [
-            ("severity", 1)
-        ]
+    print(
+        "MongoDB collections and indexes initialized successfully."
     )
-
-    # Filter by language
-    await database.events.create_index(
-        [
-            ("language", 1)
-        ]
-    )
-
-    # Event type + newest events
-    await database.events.create_index(
-        [
-            ("event_type", 1),
-            ("created_at", -1)
-        ]
-    )
-
-    print("MongoDB indexes initialized successfully.")

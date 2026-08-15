@@ -12,6 +12,7 @@ from app.database.init_db import initialize_database
 from app.routes.auth import router as auth_router
 from app.routes.events import router as events_router
 from app.routes.news import router as news_router
+from app.routes.social import router as social_router
 
 
 # ============================================================
@@ -49,10 +50,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Narrative Disinformation Simulator & Detector",
     version="1.0.0",
-    description=(
-        "AI-based proactive misinformation "
-        "analysis system."
-    ),
+    description="AI-based proactive misinformation analysis system.",
     lifespan=lifespan
 )
 
@@ -73,6 +71,10 @@ app.include_router(
     news_router
 )
 
+app.include_router(
+    social_router
+)
+
 
 # ============================================================
 # ROOT ENDPOINT
@@ -82,10 +84,7 @@ app.include_router(
 async def root():
 
     return {
-        "message": (
-            "Narrative Disinformation Simulator "
-            "API is running"
-        )
+        "message": "Narrative Disinformation Simulator API is running"
     }
 
 
@@ -96,9 +95,7 @@ async def root():
 @app.get("/health")
 async def health_check():
 
-    database_connected = (
-        await check_database_connection()
-    )
+    database_connected = await check_database_connection()
 
     return {
         "status": "healthy",
